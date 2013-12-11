@@ -26,7 +26,7 @@ on Compute Engine in the left hand navigation menu.
 "Native" type and click the "Register," button.
   1. Expand the "OAuth 2.0 Client ID" section of the screen and download the
 JSON file using the button supplied. Later on you will copy this downloaded
-file (`e.g. ~/Downloads/client_secrets.json`) to [`src/main/resources/client_secrets.json`][5].
+file to [`src/main/resources/client_secrets.json`][5].
   1. Click "Overview" in the left hand navigation and copy your Project ID into into [`/src/main/java/com/google/api/services/samples/computeengine/cmdline/ComputeEngineSample.java`][6]
 so that the following line is updated. Not performing this step will result in an 400: Bad Request error;
 specifically, "Invalid value `YOUR_PROJECT_ID`". For more information see
@@ -41,7 +41,7 @@ You may need to set your
 cd some_directory
 git clone https://github.com/GoogleCloudPlatform/compute-getting-started-java.git
 cd compute-getting-started-java
-cp ~/Downloads/client_secrets.json src/main/resources/client_secrets.json
+cp ~/Downloads/client_secret_[id-unique-to-your-project-application].json src/main/resources/client_secrets.json
 nano src/main/java/com/google/api/services/samples/computeengine/cmdline/ComputeEngineSample.java</pre>
   1. In your editor update the `YOUR_PROJECT_ID` value as specified above. Save and exit the editor.
   1. Compile code using Maven using the following command:
@@ -68,4 +68,4 @@ nano src/main/java/com/google/api/services/samples/computeengine/cmdline/Compute
 [8]: http://git-scm.com/downloads
 [9]: http://maven.apache.org/download.html
 [10]: http://www.eclipse.org/downloads/
-[11]: http://m2eclipse.sonatype.org/installing-m2eclipse.html
+[11]: http://eclipse.org/m2e/download/

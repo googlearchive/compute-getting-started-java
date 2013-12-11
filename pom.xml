@@ -135,10 +135,11 @@
     <dependency>
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-compute</artifactId>
-      <version>v1beta15-rev13-1.17.0-rc</version>
+      <version>${project.compute.version}</version>
     </dependency>
   </dependencies>
   <properties>
+    <project.compute.version>v1-rev1-1.17.0-rc</project.compute.version>
     <project.http.version>1.17.0-rc</project.http.version>
     <project.oauth.version>1.17.0-rc</project.oauth.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
