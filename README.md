@@ -17,7 +17,7 @@ Compute Engine API using the Google Java API Client Library.
 1. Register your application with Google Cloud Console.
   1. Visit the [Cloud Console][4]
   1. If this is your first time then click "Create Project," otherwise you can
-reuse an existing project by click on it.
+reuse an existing project by clicking on it.
     1. Note: You will need to enable billing for new projects by clicking
 on Compute Engine in the left hand navigation menu.
   1. Click on "APIs & auth" in the left hand navigation menu and then the
