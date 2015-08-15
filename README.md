@@ -88,7 +88,7 @@ For more information see setting your [Project ID][6].
   <pre>mvn compile</pre>
   1. Execute the sample code using Maven by running the following command:
   <pre>mvn -q exec:java</pre>
-  1.     Running the sample will list all Google Compute Engine VM instances found in
+  1. Running the sample will list all Google Compute Engine VM instances found in
     the zone you specified. The sample will also check for the existence of a VM instance
     named "my-sample-instance". If the "my-sample-instance" VM does not exist, running the
     sample will create it. If the "my-sample-instance" VM does already exist then running the
