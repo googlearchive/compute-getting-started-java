@@ -12,25 +12,26 @@
 
 package com.google.api.services.samples.computeengine.cmdline;
 
-import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
-import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
-import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
-import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.client.util.store.DataStoreFactory;
-import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.compute.Compute;
 import com.google.api.services.compute.ComputeScopes;
+import com.google.api.services.compute.model.AccessConfig;
+import com.google.api.services.compute.model.AttachedDisk;
+import com.google.api.services.compute.model.AttachedDiskInitializeParams;
 import com.google.api.services.compute.model.Instance;
 import com.google.api.services.compute.model.InstanceList;
+import com.google.api.services.compute.model.Metadata;
+import com.google.api.services.compute.model.NetworkInterface;
+import com.google.api.services.compute.model.Operation;
+import com.google.api.services.compute.model.ServiceAccount;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -47,48 +48,72 @@ public class ComputeEngineSample {
    */
   private static final String APPLICATION_NAME = "";
 
-  /** Set projectId to your Project ID from Overview pane in the APIs console */
-  private static final String projectId = "YOUR_PROJECT_ID";
+  /** Set PROJECT_ID to your Project ID from the Overview pane in the Developers console. */
+  private static final String PROJECT_ID = "YOUR_PROJECT_ID";
 
   /** Set Compute Engine zone */
-  private static final String zoneName = "us-central1-a";
+  private static final String ZONE_NAME = "us-central1-f";
 
-  /** Directory to store user credentials. */
-  private static final java.io.File DATA_STORE_DIR =
-      new java.io.File(System.getProperty("user.home"), ".store/compute_engine_sample");
+  /** Set the name of the sample VM instance to be created. */
+  private static final String SAMPLE_INSTANCE_NAME = "my-sample-instance";
 
-  /**
-   * Global instance of the {@link DataStoreFactory}. The best practice is to make it a single
-   * globally shared instance across your application.
-   */
-  private static FileDataStoreFactory dataStoreFactory;
-  
+  /** Set the path of the OS image for the sample VM instance to be created.  */
+  private static final String SOURCE_IMAGE_PREFIX = "https://www.googleapis.com/compute/v1/projects/";
+  private static final String SOURCE_IMAGE_PATH = "debian-cloud/global/images/debian-7-wheezy-v20150710";
+
+  /** Set the Network configuration values of the sample VM instance to be created. */
+  private static final String NETWORK_INTERFACE_CONFIG = "ONE_TO_ONE_NAT";
+  private static final String NETWORK_ACCESS_CONFIG = "External NAT";
+
+  /** Set the time out limit for operation calls to the Compute Engine API. */
+  private static final long OPERATION_TIMEOUT_MILLIS = 60 * 1000;
+
   /** Global instance of the HTTP transport. */
   private static HttpTransport httpTransport;
 
   /** Global instance of the JSON factory. */
   private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
 
-  /** OAuth 2.0 scopes */
-  private static final List<String> SCOPES = Arrays.asList(ComputeScopes.COMPUTE_READONLY);
+
 
   public static void main(String[] args) {
-    // Start Authorization process
     try {
       httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-      dataStoreFactory = new FileDataStoreFactory(DATA_STORE_DIR);
-      // Authorization
-      Credential credential = authorize();
 
-      // Create compute engine object for listing instances
-      Compute compute = new Compute.Builder(
-          httpTransport, JSON_FACTORY, null).setApplicationName(APPLICATION_NAME)
-          .setHttpRequestInitializer(credential).build();
+      // Authenticate using Google Application Default Credentials.
+      GoogleCredential credential = GoogleCredential.getApplicationDefault();
+      if (credential.createScopedRequired()) {
+        List<String> scopes = new ArrayList<>();
+        // Set Google Cloud Storage scope to Full Control.
+        scopes.add(ComputeScopes.DEVSTORAGE_FULL_CONTROL);
+        // Set Google Compute Engine scope to Read-write.
+        scopes.add(ComputeScopes.COMPUTE);
+        credential = credential.createScoped(scopes);
+      }
 
-      // List out instances
-      printInstances(compute, projectId);
-      // Success!
-      return;
+      // Create Compute Engine object for listing instances.
+      Compute compute = new Compute.Builder(httpTransport, JSON_FACTORY, credential)
+        .setApplicationName(APPLICATION_NAME)
+        .build();
+
+      // List out instances, looking for the one created by this sample app.
+      boolean foundOurInstance = printInstances(compute);
+
+      Operation op;
+      if (foundOurInstance) {
+        op = deleteInstance(compute, SAMPLE_INSTANCE_NAME);
+      } else {
+        op = startInstance(compute, SAMPLE_INSTANCE_NAME);
+      }
+
+      // Call Compute Engine API operation and poll for operation completion status
+      System.out.println("Waiting for operation completion...");
+      Operation.Error error = blockUntilComplete(compute, op, OPERATION_TIMEOUT_MILLIS);
+      if (error == null) {
+        System.out.println("Success!");
+      } else {
+        System.out.println(error.toPrettyString());
+      }
     } catch (IOException e) {
       System.err.println(e.getMessage());
     } catch (Throwable t) {
@@ -97,44 +122,137 @@ public class ComputeEngineSample {
     System.exit(1);
   }
 
-  /** Authorizes the installed application to access user's protected data. */
-  private static Credential authorize() throws Exception {
-    // initialize client secrets object
-    GoogleClientSecrets clientSecrets;
-    // load client secrets
-    clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(
-        ComputeEngineSample.class.getResourceAsStream("/client_secrets.json")));
-    if (clientSecrets.getDetails().getClientId().startsWith("Enter")
-        || clientSecrets.getDetails().getClientSecret().startsWith("Enter ")) {
-      System.out.println("Enter Client ID and Secret from https://code.google.com/apis/console/ "
-          + "into compute-engine-cmdline-sample/src/main/resources/client_secrets.json");
-      System.exit(1);
-    }
-    // set up authorization code flow
-    GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
-        httpTransport, JSON_FACTORY, clientSecrets, SCOPES).setDataStoreFactory(dataStoreFactory)
-        .build();
-    // authorize
-    return new AuthorizationCodeInstalledApp(flow, new LocalServerReceiver()).authorize("user");
-  }
-
   /**
    * Print available machine instances.
    *
    * @param compute The main API access point
-   * @param projectId The project ID.
+   * @return {@code true} if the instance created by this sample app is in the list
    */
-  public static void printInstances(Compute compute, String projectId) throws IOException {
+  public static boolean printInstances(Compute compute) throws IOException {
     System.out.println("================== Listing Compute Engine Instances ==================");
-    Compute.Instances.List instances = compute.instances().list(projectId, zoneName);
+    Compute.Instances.List instances = compute.instances().list(PROJECT_ID, ZONE_NAME);
     InstanceList list = instances.execute();
+    boolean found = false;
     if (list.getItems() == null) {
-      System.out.println("No instances found. Sign in to the Google APIs Console and create "
-          + "an instance at: code.google.com/apis/console");
+      System.out.println("No instances found. Sign in to the Google Developers Console and create "
+          + "an instance at: https://console.developers.google.com/");
     } else {
       for (Instance instance : list.getItems()) {
         System.out.println(instance.toPrettyString());
+        if (instance.getName().equals(SAMPLE_INSTANCE_NAME)) {
+          found = true;
+        }
       }
     }
+    return found;
+  }
+
+  public static Operation startInstance(Compute compute, String instanceName) throws IOException {
+    System.out.println("================== Starting New Instance ==================");
+
+
+    // Create VM Instance object with the required properties.
+    Instance instance = new Instance();
+    instance.setName(instanceName);
+    instance.setMachineType("https://www.googleapis.com/compute/v1/projects/" + PROJECT_ID +
+                            "/zones/" + ZONE_NAME + "/machineTypes/n1-standard-1");
+
+    // Add Network Interface to be used by VM Instance.
+    NetworkInterface ifc = new NetworkInterface();
+    ifc.setNetwork("https://www.googleapis.com/compute/v1/projects/" + PROJECT_ID + "/global/networks/default");
+    List<AccessConfig> configs = new ArrayList<>();
+    AccessConfig config = new AccessConfig();
+    config.setType(NETWORK_INTERFACE_CONFIG);
+    config.setName(NETWORK_ACCESS_CONFIG);
+    configs.add(config);
+    ifc.setAccessConfigs(configs);
+    instance.setNetworkInterfaces(Collections.singletonList(ifc));
+
+    // Add attached Persistent Disk to be used by VM Instance.
+    AttachedDisk disk = new AttachedDisk();
+    disk.setBoot(true);
+    disk.setAutoDelete(true);
+    disk.setType("PERSISTENT");
+    AttachedDiskInitializeParams params = new AttachedDiskInitializeParams();
+    // Assign the Persistent Disk the same name as the VM Instance.
+    params.setDiskName(instanceName);
+    // Specify the source operating system machine image to be used by the VM Instance.
+    params.setSourceImage(SOURCE_IMAGE_PREFIX + SOURCE_IMAGE_PATH);
+    // Specify the disk type as Standard Persistent Disk
+    params.setDiskType("https://www.googleapis.com/compute/v1/projects/" + PROJECT_ID + "/zones/"
+                       + ZONE_NAME + "/diskTypes/pd-standard");
+    disk.setInitializeParams(params);
+    instance.setDisks(Collections.singletonList(disk));
+
+    // Initialize the service account to be used by the VM Instance and set the API access scopes.
+    ServiceAccount account = new ServiceAccount();
+    account.setEmail("default");
+    List<String> scopes = new ArrayList<>();
+    scopes.add("https://www.googleapis.com/auth/devstorage.full_control");
+    scopes.add("https://www.googleapis.com/auth/compute");
+    account.setScopes(scopes);
+    instance.setServiceAccounts(Collections.singletonList(account));
+
+    // Optional - Add a startup script to be used by the VM Instance.
+    Metadata meta = new Metadata();
+    Metadata.Items item = new Metadata.Items();
+    item.setKey("startup-script-url");
+    // If you put a script called "vm-startup.sh" in this Google Cloud Storage bucket, it will execute on VM startup.
+    // This assumes you've created a bucket named the same as your PROJECT_ID
+    // For info on creating buckets see: https://cloud.google.com/storage/docs/cloud-console#_creatingbuckets
+    item.setValue("gs://" + PROJECT_ID + "/vm-startup.sh");
+    meta.setItems(Collections.singletonList(item));
+    instance.setMetadata(meta);
+
+    System.out.println(instance.toPrettyString());
+    Compute.Instances.Insert insert = compute.instances().insert(PROJECT_ID, ZONE_NAME, instance);
+    return insert.execute();
+  }
+
+  private static Operation deleteInstance(Compute compute, String instanceName) throws Exception {
+    System.out.println("================== Deleting Instance " + instanceName + " ==================");
+    Compute.Instances.Delete delete = compute.instances().delete(PROJECT_ID, ZONE_NAME, instanceName);
+    return delete.execute();
+  }
+
+  /**
+   * Wait until {@code operation} is completed.
+   * @param compute the {@code Compute} object
+   * @param operation the operation returned by the original request
+   * @param timeout the timeout, in millis
+   * @return the error, if any, else {@code null} if there was no error
+   * @throws InterruptedException if we timed out waiting for the operation to complete
+   * @throws IOException if we had trouble connecting
+   */
+  public static Operation.Error blockUntilComplete(Compute compute, Operation operation, long timeout)
+      throws Exception {
+    long start = System.currentTimeMillis();
+    final long POLL_INTERVAL = 5 * 1000;
+    String zone = operation.getZone();  // null for global/regional operations
+    if (zone != null) {
+      String[] bits = zone.split("/");
+      zone = bits[bits.length-1];
+    }
+    String status = operation.getStatus();
+    String opId = operation.getName();
+    while (operation != null && !status.equals("DONE")) {
+      Thread.sleep(POLL_INTERVAL);
+      long elapsed = System.currentTimeMillis() - start;
+      if (elapsed >= timeout) {
+        throw new InterruptedException("Timed out waiting for operation to complete");
+      }
+      System.out.println("waiting...");
+      if (zone != null) {
+        Compute.ZoneOperations.Get get = compute.zoneOperations().get(PROJECT_ID, zone, opId);
+        operation = get.execute();
+      } else {
+        Compute.GlobalOperations.Get get = compute.globalOperations().get(PROJECT_ID, opId);
+        operation = get.execute();
+      }
+      if (operation != null) {
+        status = operation.getStatus();
+      }
+    }
+    return operation == null ? null : operation.getError();
   }
 }
