@@ -107,7 +107,7 @@ For more information see setting your [Project ID][6].
   1. Select your project directory as your "Root Directory," and click "Finish."
   1. Right-click on project compute-engine-cmdline-sample.
   1. Run As > Java Application.
-  1. If asked, type or select "ComputeEngineSample" and then click OK.
+  1. If asked, type or select "ComputeEngineSample" and click OK.
   1. Application output will display in the Eclipse Console.
 
 [1]: https://developers.google.com/compute
