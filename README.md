@@ -98,6 +98,7 @@ For more information see setting your [Project ID][6].
     `gcloud compute instances list`. VM instances can be deleted with the 'gcloud compute instance delete'
     command. For example, this command will delete the 'my-sample-instance' VM instance
     in the zone 'us-central1-f':
+    
        `gcloud compute instances delete my-sample-instance --zone us-central1-f`
 
 1. Importing the code into Eclipse and running it from there:
