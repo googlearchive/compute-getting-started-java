@@ -35,7 +35,7 @@ reuse an existing project by clicking on it.
   1. Click "Overview" in the left-side navigation menu and copy your Project ID
   for use in step 3.3 below.
 
-1. Authentication instructions to run the sample:
+1. Authentication instructions to run the sample (on your local machine or on a Compute Engine VM):
   * Running the sample locally on your development machine:
       1. Install [Google Cloud SDK](https://cloud.google.com/sdk/)
       1. Run the following command to authenticate with your own account:
