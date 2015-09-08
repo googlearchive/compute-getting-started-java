@@ -40,7 +40,7 @@ reuse an existing project by clicking on it.
       1. Install [Google Cloud SDK](https://cloud.google.com/sdk/)
       1. Run the following command to authenticate with your own account:
       <pre>gcloud auth login</pre>
-  * Running the sample on Google Compute Engine using Default Application
+  * Running the sample on a Google Compute Engine VM using Default Application
   Credentials:
       1. Create a Compute Engine VM Instance.
       1. In the [Developers Console](https://console.developers.google.com/project)
