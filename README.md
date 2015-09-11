@@ -1,4 +1,4 @@
-compute-getting-started-java
+Compute Engine - Getting started with Java
 ============================
 
 This sample command line application demonstrates how to access the Google
