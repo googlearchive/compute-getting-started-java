@@ -111,9 +111,9 @@ For more information see setting your [Project ID][6].
   1. If asked, type or select "ComputeEngineSample" and click OK.
   1. Application output will display in the Eclipse Console.
 
-[1]: https://developers.google.com/compute
+[1]: https://cloud.google.com/compute/
 [2]: http://java.com/en/download/faq/develop.xml
-[3]: https://developers.google.com/compute
+[3]: https://cloud.google.com/compute/
 [4]: https://console.developers.google.com/project
 [5]: https://github.com/GoogleCloudPlatform/compute-getting-started-java/blob/master/src/main/java/com/google/api/services/samples/computeengine/cmdline/ComputeEngineSample.java#L51
 [6]: https://developers.google.com/console/help/new/#projectnumber
