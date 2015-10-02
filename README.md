@@ -38,8 +38,8 @@ reuse an existing project by clicking on it.
 1. Authentication instructions to run the sample (on your local machine or on a Compute Engine VM):
   * Running the sample locally on your development machine:
       1. Install [Google Cloud SDK](https://cloud.google.com/sdk/)
-      1. Run the following command to authenticate with your own account:
-      <pre>gcloud auth login</pre>
+      1. Run the following command to authorize the Cloud SDK and configure your project:
+      <pre>gcloud init</pre>
   * Running the sample on a Google Compute Engine VM using Default Application
   Credentials:
       1. Create a Compute Engine VM Instance.
