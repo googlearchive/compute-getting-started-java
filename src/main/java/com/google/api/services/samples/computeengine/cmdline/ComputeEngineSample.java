@@ -218,7 +218,8 @@ public class ComputeEngineSample {
     Compute.Instances.Delete delete = compute.instances().delete(PROJECT_ID, ZONE_NAME, instanceName);
     return delete.execute();
   }
-
+  
+  #[START wait_until_complete]
   /**
    * Wait until {@code operation} is completed.
    * @param compute the {@code Compute} object
@@ -259,4 +260,5 @@ public class ComputeEngineSample {
     }
     return operation == null ? null : operation.getError();
   }
+  #[END wait_until_complete]
 }
