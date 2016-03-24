@@ -122,6 +122,7 @@ public class ComputeEngineSample {
     System.exit(1);
   }
 
+  # [START list_instances]
   /**
    * Print available machine instances.
    *
@@ -146,7 +147,9 @@ public class ComputeEngineSample {
     }
     return found;
   }
-
+  #[END list_instances]
+  
+  #[START create_instances]
   public static Operation startInstance(Compute compute, String instanceName) throws IOException {
     System.out.println("================== Starting New Instance ==================");
 
@@ -208,7 +211,8 @@ public class ComputeEngineSample {
     Compute.Instances.Insert insert = compute.instances().insert(PROJECT_ID, ZONE_NAME, instance);
     return insert.execute();
   }
-
+  #[END create_instances]
+  
   private static Operation deleteInstance(Compute compute, String instanceName) throws Exception {
     System.out.println("================== Deleting Instance " + instanceName + " ==================");
     Compute.Instances.Delete delete = compute.instances().delete(PROJECT_ID, ZONE_NAME, instanceName);
